@@ -1,4 +1,3 @@
-
 --- @class (exact) TSContext.Config
 --- @field enable boolean
 --- @field max_lines integer
@@ -41,6 +40,7 @@
 ---
 --- Callback when attaching. Return false to disable attaching
 --- @field on_attach? fun(buf: integer): boolean
+--- @field filter? fun(line: string, ext: string): boolean
 
 --- @type TSContext.Config
 local default_config = {
@@ -52,6 +52,9 @@ local default_config = {
   trim_scope = 'outer',
   zindex = 20,
   mode = 'cursor',
+  filter = function(_line, _ext)
+    return true
+  end,
 }
 
 local config = vim.deepcopy(default_config)
@@ -67,7 +70,7 @@ end
 setmetatable(M, {
   __index = function(_, k)
     return config[k]
-  end
+  end,
 })
 
 return M

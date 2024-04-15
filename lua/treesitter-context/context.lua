@@ -144,6 +144,20 @@ local function trim_contexts(context_ranges, context_lines, trim, top)
   end
 end
 
+local function filter_inplace(arr, func)
+  local new_index = 1
+  local size_orig = #arr
+  for old_index, v in ipairs(arr) do
+    if func(v, old_index) then
+      arr[new_index] = v
+      new_index = new_index + 1
+    end
+  end
+  for i = new_index, size_orig do
+    arr[i] = nil
+  end
+end
+
 --- @param range Range4
 --- @return Range4, string[]
 local function get_text_for_range(range)
@@ -165,6 +179,12 @@ local function get_text_for_range(range)
     lines[#lines] = nil
     end_col = -1
     end_row = end_row - 1
+  end
+
+  if config.filter then
+    filter_inplace(lines, function(line)
+      config.filter(line, vim.bo.filetype)
+    end)
   end
 
   return { start_row, 0, end_row, -1 }, lines
