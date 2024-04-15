@@ -182,9 +182,9 @@ local function get_text_for_range(range)
   end
 
   if config.filter then
-    filter_inplace(lines, function(line)
-      config.filter(line, vim.bo.filetype)
-    end)
+    -- filter_inplace(lines, function(line)
+    -- config.filter(line, vim.bo.filetype)
+    -- end)
   end
 
   return { start_row, 0, end_row, -1 }, lines
