@@ -292,18 +292,25 @@ function M.get(bufnr, winid)
           local range0 = context_range(parent, query)
           if range0 then
             local range, lines = get_text_for_range(range0)
+            local start, c1, stop, c2 = table.unpack(range)
+            for i = start, stop, 1 do
+              local r = { i, c1, i, c2 }
+              local l = lines[i - start + 1]
+              local ffun = config.filter
+              if l and (not ffun or ffun(l, vim.bo.filetype)) then
+                local last_context = context_ranges[#context_ranges]
+                if last_context and parent_start_row == last_context[1] then
+                  -- If there are multiple contexts on the same row, then prefer the inner
+                  contexts_height = contexts_height - util.get_range_height(last_context)
+                  context_ranges[#context_ranges] = nil
+                  context_lines[#context_lines] = nil
+                end
 
-            local last_context = context_ranges[#context_ranges]
-            if last_context and parent_start_row == last_context[1] then
-              -- If there are multiple contexts on the same row, then prefer the inner
-              contexts_height = contexts_height - util.get_range_height(last_context)
-              context_ranges[#context_ranges] = nil
-              context_lines[#context_lines] = nil
+                contexts_height = contexts_height + util.get_range_height(r)
+                context_ranges[#context_ranges + 1] = r
+                context_lines[#context_lines + 1] = { l }
+              end
             end
-
-            contexts_height = contexts_height + util.get_range_height(range)
-            context_ranges[#context_ranges + 1] = range
-            context_lines[#context_lines + 1] = lines
           end
         end
       end

@@ -1,6 +1,10 @@
 # nvim-treesitter-context
 
+! Don't use this library. I hacked it together because I needed to filter comments out. 
+But it's thouroughly untested, and my Lua knowledge is equal to the index of the first item in a Lua table, 0.
+
 Lightweight alternative to [context.vim](https://github.com/wellle/context.vim)
+with filtering
 
 ## Requirements
 
@@ -217,6 +221,9 @@ require'treesitter-context'.setup{
   separator = nil,
   zindex = 20, -- The Z-index of the context window
   on_attach = nil, -- (fun(buf: integer): boolean) return false to disable attaching
+  -- Filters out the commented lines for lua files(I think)
+  -- function(line, ext) if ext == "lua" then return line:find("^%s*%-%-") == nil end end
+  filter = function(_line, _ext) return true end, -- (fun(line: string, file_ext: string): boolean) return true to see the line
 }
 ```
 
