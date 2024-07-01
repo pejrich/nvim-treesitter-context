@@ -6,8 +6,51 @@ local exec_lua = helpers.exec_lua
 local cmd      = helpers.api.nvim_command
 local feed     = helpers.feed
 
+local function get_langs()
+  local f = assert(io.open('README.md', 'r'))
+  local readme_langs = {} --- @type table<string,true>
+  for l in f:lines() do
+    --- @type string?
+    local lang = l:match('%- %[x%] `([^`]+)`')
+    if lang then
+      readme_langs[lang] = true
+    end
+  end
+  f:close()
+
+  f = assert(io.open('nvim-treesitter/lockfile.json', 'r'))
+  local txt = f:read('*a')
+  local j = vim.json.decode(txt)
+
+  local langs = {} --- @type string[]
+  for k in pairs(j) do
+    if readme_langs[k] then
+      langs[#langs+1] = k
+      readme_langs[k] = nil
+    end
+  end
+  print('Invalid languages:', table.concat(vim.tbl_keys(readme_langs), ', '))
+  return langs
+end
+
 describe('ts_context', function()
   local screen --- @type test.screen
+  local langs --- @type string[]
+
+  setup(function()
+    clear()
+    cmd [[set runtimepath+=.,./nvim-treesitter]]
+
+    langs = get_langs()
+
+    exec_lua([[
+    local langs = ...
+    require'nvim-treesitter.configs'.setup {
+      ensure_installed = langs,
+      sync_install = true,
+    }
+    ]], langs)
+  end)
 
   before_each(function()
     clear()
@@ -33,22 +76,10 @@ describe('ts_context', function()
 
     cmd [[set runtimepath+=.,./nvim-treesitter]]
 
-    exec_lua[[
-    require'nvim-treesitter.configs'.setup {
-      ensure_installed = {
-        "c",
-        "lua",
-        "rust",
-        "cpp",
-        "typescript",
-        "markdown",
-        "markdown_inline",
-        "html",
-        "javascript",
-      },
-      sync_install = true,
-    }
-    ]]
+    exec_lua([[
+    require'nvim-treesitter.configs'.setup {}
+    ]])
+
     -- Required for the proper Markdown support
     exec_lua [[require'nvim-treesitter'.setup()]]
 
@@ -100,6 +131,56 @@ describe('ts_context', function()
       {6:~                             }|*3
                                     |
     ]]}
+  end)
+
+  describe('query:', function()
+    local readme_lines = {} --- @type string[]
+
+    setup(function()
+      local f = assert(io.open('README.md', 'r'))
+      for l in f:lines() do
+        readme_lines[#readme_lines+1] = l
+      end
+      f:close()
+    end)
+
+    for _, lang in ipairs(langs) do
+      it(lang, function()
+        local index --- @type integer
+        local line_orig --- @type string
+
+        for i, l in pairs(readme_lines) do
+          --- @type string?
+          local lang1 = l:match('%- %[x%] `([^`]+)`')
+          if lang1 == lang then
+            l = l:gsub(' %(broken%)', '')
+            index, line_orig = i, l
+            readme_lines[i] = l..' (broken)'
+          else
+            readme_lines[i] = l
+          end
+        end
+
+        assert(index)
+
+        exec_lua([[
+        local lang = ...
+        vim.treesitter.query.get(lang, 'context')
+        ]], lang)
+
+        readme_lines[index] = line_orig
+      end)
+    end
+
+    teardown(function()
+      local f = assert(io.open('README.md', 'w'))
+      for _, l in ipairs(readme_lines) do
+        f:write(l)
+        f:write('\n')
+      end
+      f:close()
+    end)
+
   end)
 
   describe('language:', function()
@@ -292,6 +373,72 @@ describe('ts_context', function()
           {15:}} {4:while} {15:(}{11:1}{15:);}                |
         {15:}}                             |
         {6:~                             }|*6
+                                      |
+      ]]}
+    end)
+
+    it('php', function()
+      cmd('edit test/test.php')
+      exec_lua [[vim.treesitter.start()]]
+
+      feed'7<C-e>'
+      screen:expect{grid=[[
+        {1:function}{2: }{3:foo}{14:(}{3:$a}{14:,}{2: }{3:$b}{14:)}{2: }{14:{}{2:        }|
+        {2:  }{1:while}{2: }{14:(}{3:$a}{2: }{1:<=}{2: }{3:$b}{14:)}{2: }{14:{}{2:          }|
+            {5:$index} {4:=} {5:$low} {4:+} {5:floor}{15:((}{5:$hi}|
+            {8:// comment}                |
+            {5:$indexValue} {4:=} {5:$a}{15:;}         |
+        ^    {4:if} {15:(}{5:$indexValue} {4:===} {5:$a}{15:)} {15:{} |
+              {8:// comment}              |
+                                      |
+                                      |
+              {5:$position} {4:=} {5:$index}{15:;}     |
+              {4:return} {15:(}{9:int}{15:)} {5:$position}{15:;} |
+            {15:}}                         |
+            {4:if} {15:(}{5:$indexValue} {4:<} {5:$key}{15:)} {15:{} |
+              {8:// comment}              |
+                                      |
+                                      |
+      ]]}
+
+      feed'67<C-e>'
+      screen:expect{grid=[[
+        {1:class}{2: }{7:Fruit}{2: }{14:{}{2:                 }|
+                                      |
+                                      |
+                                      |
+                                      |
+        ^    {15:#[}ReturnTypeWillChange{15:]}   |
+            {9:public} {4:function} {5:rot}{15:():} {9:voi}|
+            {15:{}                         |
+                                      |
+                                      |
+                {4:return}{15:;}               |
+            {15:}}                         |
+                                      |
+                                      |
+                                      |
+                                      |
+
+      ]]}
+
+      feed'5<C-e>'
+      screen:expect{grid=[[
+        {1:class}{2: }{7:Fruit}{2: }{14:{}{2:                 }|
+        {2:    }{7:public}{2: }{1:function}{2: }{3:rot}{14:():}{2: }{7:voi}|
+        {2:    }{14:{}{2:                         }|
+                                      |
+                                      |
+        ^        {4:return}{15:;}               |
+            {15:}}                         |
+                                      |
+                                      |
+                                      |
+         {8:// comment}                   |
+                                      |
+                                      |
+                                      |
+                                      |
                                       |
       ]]}
     end)

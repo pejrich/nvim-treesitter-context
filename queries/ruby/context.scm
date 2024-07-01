@@ -2,6 +2,10 @@
   (body_statement) @context.end
 ) @context
 
+(singleton_class
+  (body_statement) @context.end
+) @context
+
 (module
   (body_statement) @context.end
 ) @context
@@ -43,7 +47,7 @@
    "include_examples"
    "include_context"
    "context"
-   "description"
+   "describe"
    "shared_context"
    "shared_examples")
 ) @context
