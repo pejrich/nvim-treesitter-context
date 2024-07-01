@@ -41,8 +41,6 @@
 --- Callback when attaching. Return false to disable attaching
 --- @field on_attach? fun(buf: integer): boolean
 --- @field filter? fun(line: string, ext: string): boolean
---- Max file size in byte before autodisabling plugin
---- @field max_file_size? integer
 
 --- @type TSContext.Config
 local default_config = {

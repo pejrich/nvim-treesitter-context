@@ -154,10 +154,6 @@ end
 function M.enable()
   local cbuf = api.nvim_get_current_buf()
 
-  if vim.fn.getfsize(vim.fn.expand('%:p')) > config.max_file_size then
-    return
-  end
-
   attached[cbuf] = true
 
   autocmd({ 'WinScrolled', 'BufEnter', 'WinEnter', 'VimResized' }, update)

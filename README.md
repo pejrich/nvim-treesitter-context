@@ -228,7 +228,6 @@ require'treesitter-context'.setup{
   -- Filters out the commented lines for lua files(I think)
   -- function(line, ext) if ext == "lua" then return line:find("^%s*%-%-") == nil end end
   filter = function(_line, _ext) return true end, -- (fun(line: string, file_ext: string): boolean) return true to see the line
-  max_file_size = 100000,
 }
 ```
 
