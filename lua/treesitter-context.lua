@@ -109,7 +109,7 @@ local update = throttle(function()
   assert(context_lines)
 
   open(bufnr, winid, context, context_lines)
-end)
+end, 1000)
 
 local M = {
   config = config,
@@ -127,8 +127,36 @@ local function autocmd(event, callback, opts)
   api.nvim_create_autocmd(event, opts)
 end
 
+local timer = vim.loop.new_timer()
+local cursor_moved = function()
+  timer:stop()
+  timer:start(1000, 0, function()
+    timer:stop()
+    vim.schedule(update)
+  end)
+  -- local timer = assert(vim.loop.new_timer())
+  -- local waiting = 0
+  -- return function()
+  --   if timer:is_active() then
+  --     waiting = waiting + 1
+  --     return
+  --   end
+  --   waiting = 0
+  --   f() -- first call, execute immediately
+  --   timer:start(ms, 0, function()
+  --     if waiting > 1 then
+  --       vim.schedule(f) -- only execute if there are calls waiting
+  --     end
+  --   end)
+  -- end
+end
+
 function M.enable()
   local cbuf = api.nvim_get_current_buf()
+
+  if vim.fn.getfsize(vim.fn.expand('%:p')) > config.max_file_size then
+    return
+  end
 
   attached[cbuf] = true
 
@@ -145,7 +173,7 @@ function M.enable()
     attached[args.buf] = nil
   end)
 
-  autocmd('CursorMoved', update)
+  autocmd('CursorMoved', cursor_moved)
 
   autocmd('OptionSet', function(args)
     if args.match == 'number' or args.match == 'relativenumber' then
@@ -189,7 +217,11 @@ local function init()
   api.nvim_set_hl(0, 'TreesitterContext', { link = 'NormalFloat', default = true })
   api.nvim_set_hl(0, 'TreesitterContextLineNumber', { link = 'LineNr', default = true })
   api.nvim_set_hl(0, 'TreesitterContextBottom', { link = 'NONE', default = true })
-  api.nvim_set_hl(0, 'TreesitterContextLineNumberBottom', { link = 'TreesitterContextBottom', default = true })
+  api.nvim_set_hl(
+    0,
+    'TreesitterContextLineNumberBottom',
+    { link = 'TreesitterContextBottom', default = true }
+  )
   api.nvim_set_hl(0, 'TreesitterContextSeparator', { link = 'FloatBorder', default = true })
 end
 
