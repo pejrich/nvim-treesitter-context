@@ -17,6 +17,9 @@ Note: if you need support for Neovim 0.6.x please use the tag `compat/0.6`.
 ![theme](./static/demo.gif)
 
 ## Supported Languages
+
+Note: support for specific languages is strictly community maintained and can break from time to time as parsers are updated.
+
 <details>
 <summary>click to expand</summary
 
@@ -34,6 +37,7 @@ Note: if you need support for Neovim 0.6.x please use the tag `compat/0.6`.
   - [x] `d`
   - [x] `dart`
   - [x] `elixir`
+  - [x] `elm`
   - [x] `fennel`
   - [x] `fish`
   - [x] `fortran`
@@ -76,6 +80,7 @@ Note: if you need support for Neovim 0.6.x please use the tag `compat/0.6`.
   - [x] `solidity`
   - [x] `svelte`
   - [x] `swift`
+  - [x] `tact`
   - [x] `tcl`
   - [x] `teal`
   - [x] `templ`
@@ -112,7 +117,6 @@ Note: if you need support for Neovim 0.6.x please use the tag `compat/0.6`.
   - [ ] `ebnf`
   - [ ] `ecma`
   - [ ] `eex`
-  - [ ] `elm`
   - [ ] `elsa`
   - [ ] `elvish`
   - [ ] `embedded_template`
